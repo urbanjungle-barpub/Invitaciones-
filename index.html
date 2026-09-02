@@ -52,7 +52,7 @@
     display:flex;
     align-items:stretch;
     justify-content:center;
-    gap:0;
+    gap:28px;
   }
 
   .poster{
@@ -61,8 +61,6 @@
     border-radius:22px;
     overflow:hidden;
     box-shadow:0 20px 60px rgba(0,0,0,.55);
-    margin-right:-40px; /* leve superposición con la tarjeta, como en el diseño de referencia */
-    z-index:1;
   }
   .poster img{
     width:100%;
@@ -92,8 +90,8 @@
 
   /* En pantallas chicas, apilar: póster arriba, tarjeta abajo */
   @media (max-width: 760px){
-    .layout{ flex-direction:column; align-items:center; }
-    .poster{ margin-right:0; margin-bottom:-30px; max-width:420px; width:100%; }
+    .layout{ flex-direction:column; align-items:center; gap:20px; }
+    .poster{ max-width:420px; width:100%; }
     .card{ width:100%; }
   }
 
@@ -302,7 +300,7 @@ function wrapAndFitText(context, text, maxWidth, maxHeight, startSize) {
 }
 
 function generarImagen(nombre) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const draw = () => {
       canvas.width = baseImage.naturalWidth;
       canvas.height = baseImage.naturalHeight;
@@ -329,9 +327,21 @@ function generarImagen(nombre) {
 
     if (baseImage.complete && baseImage.naturalWidth > 0) {
       draw();
-    } else {
-      baseImage.onload = draw;
+      return;
     }
+
+    // Si la imagen no carga en 8 segundos (ej: nombre de archivo mal escrito
+    // o mayúsculas/minúsculas distintas a "flyer.png"), avisamos en vez de
+    // dejar el botón colgado en "Generando...".
+    const timeout = setTimeout(() => {
+      reject(new Error('No se pudo cargar flyer.png. Verificá que el archivo exista en el repo con ese nombre exacto (minúsculas).'));
+    }, 8000);
+
+    baseImage.onload = () => { clearTimeout(timeout); draw(); };
+    baseImage.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error('No se pudo cargar flyer.png. Verificá que el archivo exista en el repo con ese nombre exacto (minúsculas).'));
+    };
   });
 }
 
