@@ -218,7 +218,7 @@
 <div class="layout">
 
   <!-- ===== PÓSTER / LINE UP DE ARTISTAS ===== -->
-  <div class="poster">
+  <div class="poster" id="posterWrap">
     <img src="portada.png" alt="Line up Sunset The Drop">
   </div>
 
@@ -241,14 +241,13 @@
 
     <!-- ===== PANTALLA DE ÉXITO ===== -->
     <div class="success" id="successScreen">
-      <div class="check">🎉</div>
       <h2>¡Listo, tu invitación está lista!</h2>
-      <img id="previewImg" class="preview-img" alt="Invitación generada">
       <p>¡Te esperamos este sábado! 🌅🔥
 <b class="tag">INVITACIÓN ESPECIAL!</b>
 📲 Sube la imagen a tu historia
 🏷️ Etiquetá a <span class="tag">@UrbanJungle.barpub</span>
 ✨ ¡Y nos vemos en Sunset The Drop!</p>
+      <img id="previewImg" class="preview-img" alt="Invitación generada">
       <div class="btns">
         <button id="downloadAgainBtn">⬇️ Descargar imagen</button>
         <button id="restartBtn" class="secondary">Cargar otro invitado</button>
@@ -277,6 +276,7 @@ const submitBtn = document.getElementById('submitBtn');
 const errorMsg = document.getElementById('errorMsg');
 const formScreen = document.getElementById('formScreen');
 const successScreen = document.getElementById('successScreen');
+const posterWrap = document.getElementById('posterWrap');
 const previewImg = document.getElementById('previewImg');
 const canvas = document.getElementById('canvasFlyer');
 const ctx = canvas.getContext('2d');
@@ -402,6 +402,7 @@ form.addEventListener('submit', async (e) => {
 
     formScreen.style.display = 'none';
     successScreen.style.display = 'block';
+    if (posterWrap) posterWrap.style.display = 'none';
   } catch (err) {
     console.error(err);
     errorMsg.textContent = 'Ocurrió un error generando tu invitación. Probá de nuevo.';
@@ -419,6 +420,7 @@ document.getElementById('restartBtn').addEventListener('click', () => {
   form.reset();
   successScreen.style.display = 'none';
   formScreen.style.display = 'block';
+  if (posterWrap) posterWrap.style.display = '';
 });
 </script>
 </body>
