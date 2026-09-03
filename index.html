@@ -240,7 +240,7 @@
 <body>
 
 <!-- ===== MÚSICA DE FONDO ===== -->
-<audio id="bgMusic" src="musica.mp3" loop preload="none"></audio>
+<audio id="bgMusic" src="musica.mp3" loop preload="auto"></audio>
 <button id="musicToggle" type="button" title="Música">🔇</button>
 
 <div class="layout">
@@ -468,6 +468,23 @@ musicToggle.addEventListener('click', () => {
     musicToggle.textContent = '🔊';
   }
   musicPlaying = !musicPlaying;
+});
+
+// Intento de autoplay al cargar la página. La mayoría de los navegadores
+// lo van a bloquear por política de sonido automático; en ese caso el
+// usuario simplemente toca el botón 🔇 para activarla manualmente.
+window.addEventListener('DOMContentLoaded', () => {
+  bgMusic.volume = 0.5;
+  bgMusic.play()
+    .then(() => {
+      musicPlaying = true;
+      musicToggle.textContent = '🔊';
+    })
+    .catch(() => {
+      // Autoplay bloqueado: queda en 🔇 esperando el toque del usuario
+      musicPlaying = false;
+      musicToggle.textContent = '🔇';
+    });
 });
 </script>
 </body>
