@@ -91,8 +91,8 @@
   /* En pantallas chicas, apilar: póster arriba, tarjeta abajo */
   @media (max-width: 760px){
     .layout{ flex-direction:column; align-items:center; gap:20px; }
-    .poster{ max-width:420px; width:100%; }
-    .card{ width:100%; }
+    .poster{ flex:none; max-width:420px; width:100%; }
+    .card{ flex:none; width:100%; }
     .logo-img{ width:60%; max-width:220px; }
   }
 
@@ -211,9 +211,37 @@
   .hidden{ display:none !important; }
 
   canvas{ display:none; }
+
+  /* ---- Botón de música ---- */
+  #musicToggle{
+    position:fixed;
+    top:16px;
+    right:16px;
+    z-index:50;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    border:1px solid var(--borde);
+    background:linear-gradient(180deg, var(--verde-900), var(--verde-950));
+    color:var(--dorado);
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,.4);
+    margin:0;
+    padding:0;
+    transition:transform .15s;
+  }
+  #musicToggle:hover{ transform:scale(1.05); }
 </style>
 </head>
 <body>
+
+<!-- ===== MÚSICA DE FONDO ===== -->
+<audio id="bgMusic" src="musica.mp3" loop preload="none"></audio>
+<button id="musicToggle" type="button" title="Música">🔇</button>
 
 <div class="layout">
 
@@ -421,6 +449,25 @@ document.getElementById('restartBtn').addEventListener('click', () => {
   successScreen.style.display = 'none';
   formScreen.style.display = 'block';
   if (posterWrap) posterWrap.style.display = '';
+});
+
+/* ===== MÚSICA DE FONDO ===== */
+const bgMusic = document.getElementById('bgMusic');
+const musicToggle = document.getElementById('musicToggle');
+let musicPlaying = false;
+
+musicToggle.addEventListener('click', () => {
+  if (musicPlaying) {
+    bgMusic.pause();
+    musicToggle.textContent = '🔇';
+  } else {
+    bgMusic.volume = 0.5;
+    bgMusic.play().catch(() => {
+      // Si el navegador bloquea la reproducción, no rompemos nada
+    });
+    musicToggle.textContent = '🔊';
+  }
+  musicPlaying = !musicPlaying;
 });
 </script>
 </body>
