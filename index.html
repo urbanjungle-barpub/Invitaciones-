@@ -339,17 +339,36 @@ function generarImagen(nombre) {
       const cx = BOX.x + BOX.width / 2;
       const cy = BOX.y + BOX.height / 2;
 
-      const fontSize = wrapAndFitText(ctx, nombre.toUpperCase(), BOX.width - 24, BOX.height, 48);
+      const textoNombre = nombre.toUpperCase();
+
+      const fontSize = wrapAndFitText(
+      ctx,
+      textoNombre,
+      BOX.width - 40,
+      BOX.height - 20,
+      48
+      );
+
       ctx.font = `700 ${fontSize}px 'Arial Black', Arial, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+// Nombre en BLANCO
+      ctx.fillStyle = '#FFFFFF';
+
+// Sombra suave para que se lea sobre el rectángulo
+      ctx.shadowColor = 'rgba(0,0,0,0.45)';
       ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 2;
-      ctx.fillStyle = '#1a1405';
-      ctx.fillText(nombre.toUpperCase(), cx, cy);
+
+      ctx.fillText(textoNombre, cx, cy);
+
+// Limpiar sombra
       ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
 
       const dataUrl = canvas.toDataURL('image/png');
       resolve(dataUrl);
