@@ -295,9 +295,9 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_5d8vfDpbtI
 /* ============================================================
    ZONA DEL NOMBRE EN EL FLYER (el que se usa para generar la
    invitación descargable, distinto de la portada del lineup)
-   Medido sobre flyer.png de 1080x1920px.
+   Medido sobre flyer.png de 3370x5987px.
    ============================================================ */
-const BOX = { x: 207, y: 1024, width: 666, height: 137 };
+const BOX = { x: 737, y: 3181, width: 1982, height: 437 };
 
 const form = document.getElementById('regForm');
 const submitBtn = document.getElementById('submitBtn');
@@ -339,36 +339,18 @@ function generarImagen(nombre) {
       const cx = BOX.x + BOX.width / 2;
       const cy = BOX.y + BOX.height / 2;
 
-      const textoNombre = nombre.toUpperCase();
-
-      const fontSize = wrapAndFitText(
-      ctx,
-      textoNombre,
-      BOX.width - 40,
-      BOX.height - 20,
-      48
-      );
-
+      const startSize = Math.floor(BOX.height * 0.6);
+      const fontSize = wrapAndFitText(ctx, nombre.toUpperCase(), BOX.width - (BOX.width * 0.04), BOX.height, startSize);
       ctx.font = `700 ${fontSize}px 'Arial Black', Arial, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-// Nombre en BLANCO
-      ctx.fillStyle = '#FFFFFF';
-
-// Sombra suave para que se lea sobre el rectángulo
-      ctx.shadowColor = 'rgba(0,0,0,0.45)';
-      ctx.shadowBlur = 4;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 2;
-
-      ctx.fillText(textoNombre, cx, cy);
-
-// Limpiar sombra
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = Math.max(4, fontSize * 0.05);
+      ctx.shadowOffsetY = Math.max(2, fontSize * 0.03);
+      ctx.fillStyle = '#e4f0e1';
+      ctx.fillText(nombre.toUpperCase(), cx, cy);
       ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
 
       const dataUrl = canvas.toDataURL('image/png');
       resolve(dataUrl);
