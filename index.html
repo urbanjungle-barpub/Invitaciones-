@@ -270,7 +270,7 @@
     <!-- ===== PANTALLA DE ÉXITO ===== -->
     <div class="success" id="successScreen">
       <h2>¡Listo, tu invitación está lista!</h2>
-      <p>¡Te esperamos este sábado! 🌅🔥
+      <p>¡Te esperamos este domingo! 🌅🔥
 <b class="tag">INVITACIÓN ESPECIAL!</b>
 📲 Sube la imagen a tu historia
 🏷️ Etiquetá a <span class="tag">@UrbanJungle.barpub</span>
@@ -290,7 +290,23 @@
 
 <script>
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFSaUtzr2BNAoQ2MEp0l5VDO_cWyF8Avq-MAN4-paS-eOw3Vhgz9NjN_oH83dgKVv_IQ/exec";
+/* ============================================================
+   REGISTRO EN LA PLANILLA
+   GOOGLE_SCRIPT_URL: URL /exec del script Registro.gs (la nueva
+   implementación). Si no la cambiás, el formulario ahora AVISA que no
+   pudo registrar en vez de mostrar "listo" sin haber guardado nada.
+
+   ORIGEN: a qué lista se suma el invitado. Tiene que coincidir con una
+   clave de ORIGENES en Registro.gs: organico | meta_ads | tiktok_ads |
+   rrpp1 | rrpp2
+
+   BLOQUEAR_SI_FALLA_REGISTRO: true  -> si no se pudo guardar en la
+   planilla, NO se entrega la invitación y se pide reintentar (nadie
+   queda fuera de la lista sin saberlo). false -> se entrega igual.
+   ============================================================ */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxS74z8WMzEeX7CNh1pVRFZFkEZpFx7mI4OaQiUNKQOb4MYKWz_U23IQ3rG3uELDAwkrw/exec"; // 👈 reemplazá por la URL de la nueva implementación
+const ORIGEN = "organico";
+const BLOQUEAR_SI_FALLA_REGISTRO = true;
 
 /* ============================================================
    ZONA DEL NOMBRE EN EL FLYER (el que se usa para generar la
@@ -397,21 +413,76 @@ function descargarImagen(dataUrl, fileName) {
   document.body.removeChild(a);
 }
 
-async function enviarAGoogleSheets(nombre, telefono) {
+/* ---- Llamada JSONP: permite LEER la respuesta del script sin CORS ---- */
+function jsonp(url, params, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const cbName = '__reg_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    const script = document.createElement('script');
+    let terminado = false;
+
+    const limpiar = () => {
+      terminado = true;
+      clearTimeout(timer);
+      window[cbName] = () => {}; // si llega una respuesta tardía, no rompe nada
+      script.remove();
+    };
+
+    const timer = setTimeout(() => {
+      if (terminado) return;
+      limpiar();
+      reject(new Error('timeout'));
+    }, timeoutMs);
+
+    window[cbName] = (data) => {
+      if (terminado) return;
+      limpiar();
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      if (terminado) return;
+      limpiar();
+      reject(new Error('red'));
+    };
+
+    const qs = new URLSearchParams(Object.assign({}, params, { callback: cbName }));
+    script.src = url + (url.indexOf('?') === -1 ? '?' : '&') + qs.toString();
+    document.head.appendChild(script);
+  });
+}
+
+/* ---- Registra al invitado y CONFIRMA que quedó guardado ----
+   Devuelve { ok: true, row } o { ok: false, error }.
+   El "token" evita filas duplicadas si hay que reintentar. */
+async function registrarInvitado(nombre, telefono) {
   if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('PEGA_AQUI')) {
     console.warn('GOOGLE_SCRIPT_URL no configurada: el registro no se envió a la planilla.');
-    return;
+    return { ok: false, error: 'url sin configurar' };
   }
-  const body = new URLSearchParams({ nombre, telefono, fecha: new Date().toISOString() });
-  try {
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body
-    });
-  } catch (err) {
-    console.error('Error enviando a Google Sheets:', err);
+
+  const token = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  let ultimoError = 'sin respuesta';
+
+  for (let intento = 1; intento <= 2; intento++) {
+    try {
+      const r = await jsonp(GOOGLE_SCRIPT_URL, {
+        action: 'registrar',
+        origen: ORIGEN,
+        nombre: nombre,
+        telefono: telefono,
+        token: token
+      }, 10000);
+
+      if (r && r.ok) return r;
+      ultimoError = (r && r.error) ? r.error : 'respuesta inválida';
+    } catch (err) {
+      ultimoError = err.message;
+    }
+    console.warn('Registro: intento ' + intento + ' falló (' + ultimoError + ')');
   }
+
+  console.error('Registro en planilla falló:', ultimoError);
+  return { ok: false, error: ultimoError };
 }
 
 form.addEventListener('submit', async (e) => {
@@ -430,10 +501,15 @@ form.addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Generando...';
 
   try {
-    const [dataUrl] = await Promise.all([
+    const [dataUrl, registro] = await Promise.all([
       generarImagen(nombre),
-      enviarAGoogleSheets(nombre, telefono)
+      registrarInvitado(nombre, telefono)
     ]);
+
+    if (!registro.ok && BLOQUEAR_SI_FALLA_REGISTRO) {
+      errorMsg.textContent = 'No pudimos registrar tu lugar (' + registro.error + '). Revisá tu conexión y probá de nuevo.';
+      return; // el bloque finally reactiva el botón
+    }
 
     lastDataUrl = dataUrl;
     lastFileName = `invitacion_${nombre.replace(/\s+/g, '_').toLowerCase()}.png`;
